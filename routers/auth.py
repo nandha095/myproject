@@ -14,8 +14,10 @@ from blog.schemas.user import (
     RegisterRequest,
     LoginUser,
     LoginOTPRequest,
-    LoginOTPVerify
+    LoginOTPVerify,
+    ResetPasswordRequest
 )
+from blog.utils.hash import get_password_hash
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -117,3 +119,28 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
 
 #     token = create_token({"sub": user.email})
 #     return {"token": token}
+
+
+@router.post("/forgot-password")
+def forgot_password(payload: OTPRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    otp = otp_service.generate_otp(payload.email)
+    email_service.send_otp_email(payload.email, otp, purpose="Password Reset")
+    return {"message": "OTP for password reset sent to your email"}
+
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    if not otp_service.verify_otp(payload.email, payload.otp):
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.password = get_password_hash(payload.new_password)
+    db.commit()
+    return {"message": "Password reset successful"}

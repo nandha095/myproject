@@ -40,3 +40,8 @@ class UserProfile(BaseModel):
 
 class UpdatePrivacyRequest(BaseModel):
     is_private: bool
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str

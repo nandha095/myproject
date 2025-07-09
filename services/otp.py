@@ -27,3 +27,19 @@ def verify_otp(email: str, otp: str) -> bool:
         return False
     return True
 
+
+def send_otp_email(email: str, otp: str, purpose: str = "OTP Verification"):
+    subject = f"{purpose} - OTP Code"
+    message = f"""
+Hello,
+
+Your OTP code for {purpose.lower()} is: {otp}
+
+If you did not request this, please ignore.
+
+Thanks,  
+FastAPI Blog Team
+"""
+    
+
+
