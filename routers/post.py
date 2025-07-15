@@ -5,10 +5,10 @@ from blog.models import post as post_model, user as user_model
 from blog.schemas.post import PostCreate, PostOut, PostUpdate
 from blog.utils.jwt import get_current_user
 from blog.schemas.post import PostStatusUpdate
-
 from blog.schemas.post import PostUpdate
 from blog.schemas.post import PostOut
 from blog.models.post import Post
+from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -25,34 +25,38 @@ def create_post(payload: PostCreate, db: Session = Depends(get_db), current_user
     db.refresh(new_post)
     return new_post
 
-
 @router.get("", response_model=list[PostOut])
 def get_feed(db: Session = Depends(get_db), current_user: user_model.User = Depends(get_current_user)):
-    # Get IDs of followed users
-    followed_ids = [user.id for user in current_user.following]
-
     from sqlalchemy import or_
 
-    # Fetch posts:
+    followed_ids = [user.id for user in current_user.following]
+    
     posts = db.query(post_model.Post).join(user_model.User).filter(
         post_model.Post.is_active == True,
         post_model.Post.is_deleted == False,
         or_(
-            # Show public posts (regardless of follow)
             user_model.User.is_private == False,
-            # OR show private posts only from followed users
             post_model.Post.user_id.in_(followed_ids)
         )
     ).all()
 
-    # Add like count
+   
+    response = []
     for post in posts:
-        post.like_count = len(post.liked_by)
+        response.append({
+            "id": post.id,
+            "title": post.title,
+            "content": post.content,
+            "is_active": post.is_active,
+            "is_deleted": post.is_deleted,
+            "is_public": post.is_public,
+            "created_at": post.created_at,
+            "user_id": post.user_id,
+            "like_count": len(post.liked_by),
+            "liked_by": [user.email for user in post.liked_by]
+        })
 
-    return posts
-
-
-
+    return response
 
 @router.patch("/{post_id}", response_model=PostOut)
 def partial_update_post(
@@ -116,4 +120,15 @@ def unlike_post(post_id: int, db: Session = Depends(get_db), current_user: user_
     post.liked_by.remove(current_user)
     db.commit()
     return {"message": "Post unliked successfully"}
+
+@router.get("/{post_id}/likes")
+def get_post_likes(post_id: int, db: Session = Depends(get_db), current_user: user_model.User = Depends(get_current_user)):
+    post = db.query(post_model.Post).filter_by(id=post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    return {
+        "post_id": post.id,
+        "liked_by": [user.email for user in post.liked_by]
+    }
 

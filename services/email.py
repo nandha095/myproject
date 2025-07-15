@@ -30,4 +30,3 @@ def send_otp_email(to_email: str, otp: str, purpose: str = "Your OTP Code"):
             print(f"[EMAIL] OTP sent successfully to {to_email}")
     except Exception as e:
         print(f"[ERROR] Failed to send OTP: {e}")
-        

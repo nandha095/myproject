@@ -27,6 +27,8 @@ post_likes = Table(
     Column("post_id", Integer, ForeignKey("posts.id"))
 )
 
+
+
 class User(Base):
     __tablename__ = "users"
 

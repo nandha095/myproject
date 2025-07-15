@@ -93,7 +93,7 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
     if not user.is_active or user.is_blocked:
         raise HTTPException(status_code=403, detail="User not allowed")
 
-    token = create_token({"sub": user.email})
+    token = create_token(user)
     return {"access_token": token, "token_type": "bearer"}
 
 # 4. Request OTP for login (optional flow)
@@ -136,11 +136,17 @@ def forgot_password(payload: OTPRequest, db: Session = Depends(get_db)):
 def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
     if not otp_service.verify_otp(payload.email, payload.otp):
         raise HTTPException(status_code=400, detail="Invalid OTP")
+    
+
 
     user = db.query(User).filter(User.email == payload.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
+    
+    
     user.password = get_password_hash(payload.new_password)
     db.commit()
     return {"message": "Password reset successful"}
+
+
+

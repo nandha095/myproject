@@ -19,4 +19,5 @@ class OTP(Base):
     email = Column(String(255), ForeignKey('users.email'), nullable=False)
     code = Column(String(6), nullable=False)
     expires_at = Column(DateTime)
+    
 

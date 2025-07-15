@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional,List
 import datetime
 
 class PostCreate(BaseModel):
@@ -17,6 +17,7 @@ class PostOut(BaseModel):
     created_at: datetime.datetime
     user_id: int
     like_count: Optional[int] = 0
+    liked_by: Optional[List[str]] = []
 
     model_config = {
         "arbitrary_types_allowed": True,

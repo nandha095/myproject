@@ -12,6 +12,12 @@ post_likes = Table(
     extend_existing=True
 )
 
+liked_by = relationship(
+    "blog.models.user.User",
+    secondary=post_likes,
+    back_populates="liked_posts"
+)
+
 class Post(Base):
     __tablename__ = "posts"
 

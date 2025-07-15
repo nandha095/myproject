@@ -8,17 +8,21 @@ from blog.database import get_db
 from blog.models.user import User
 
 # SECRET key and algorithm
-SECRET_KEY = "your_secret_key"  # use a strong one in production
+SECRET_KEY = "140d1c68-b0bf-4dfb-964a-eaabb396be32"  
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def create_token(data: dict):
-    to_encode = data.copy()
+def create_token(user: User):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    payload = {
+        "sub": user.email,
+        "user_id": user.id,
+        "name": user.name,
+        "exp": expire
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
